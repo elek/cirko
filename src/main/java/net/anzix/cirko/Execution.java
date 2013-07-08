@@ -1,6 +1,8 @@
 package net.anzix.cirko;
 
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Metadata for one build execution.
@@ -18,6 +20,15 @@ public class Execution {
     private long time;
 
     private String vcsRevision;
+    /**
+     * Url to the vcsRevision on a web based browser.
+     */
+    private String vcsUrl;
+
+    /**
+     * Download urls (name,url) relative to the branch meta dir.
+     */
+    Map<String, String> downloadables = new HashMap<>();
 
     public void start() {
         date = new Date();
@@ -73,5 +84,13 @@ public class Execution {
 
     public void setVcsRevision(String vcsRevision) {
         this.vcsRevision = vcsRevision;
+    }
+
+    public Map<String, String> getDownloadables() {
+        return downloadables;
+    }
+
+    public void setDownloadables(Map<String, String> downloadables) {
+        this.downloadables = downloadables;
     }
 }

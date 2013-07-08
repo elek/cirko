@@ -10,6 +10,7 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
@@ -45,17 +46,16 @@ public class Script implements Buildr {
             p.directory(project.getRoot().toFile().getAbsoluteFile());
             p.redirectErrorStream(true);
             p.redirectOutput(brachMetaDir.resolve("last-output.txt").toFile());
-            loadEnv(p.environment());
-
+            populateEnv(p.environment(), project);
 
             ex.start();
             Process ps = p.start();
             ex.setSuccess(ps.waitFor() == 0);
             ex.stop();
-
+            LOG.error(String.format("Script execution returned with %d", ps.exitValue()));
 
         } catch (Exception e) {
-            LOG.debug(String.format("Can't build the %s on %s ", project.getName(), ex.getBranch()), e);
+            LOG.error(String.format("Error during the script execution"), e);
             ex.setSuccess(false);
         }
     }
@@ -68,13 +68,19 @@ public class Script implements Buildr {
         }
     }
 
-    @Override
-    public Set<Path> pathToStore() {
-        return new HashSet<>();
+
+    public void populateEnv(Map<String, String> envVars, Project project) {
+        if (System.getenv("PATH") != null) {
+            envVars.put("PATH", System.getenv("PATH"));
+        }
+        if (System.getenv("JAVA_HOME") != null) {
+            envVars.put("JAVA_HOME", System.getenv("JAVA_HOME"));
+        }
+        loadEnv(envVars, env.getMetadataDir().resolve("env.properties"));
+        loadEnv(envVars, project.getMetadataDir().resolve("env.properties"));
     }
 
-    public void loadEnv(Map<String, String> envVars) {
-        Path envFile = env.getMetaDir().resolve("env.properties");
+    public void loadEnv(Map<String, String> envVars, Path envFile) {
         if (Files.exists(envFile)) {
             Properties sp = new Properties();
             try (InputStream stream = new FileInputStream(envFile.toFile())) {
@@ -86,11 +92,13 @@ public class Script implements Buildr {
                 e.printStackTrace();
             }
         }
-        if (System.getenv("PATH") != null) {
-            envVars.put("PATH", System.getenv("PATH"));
-        }
-        if (System.getenv("JAVA_HOME") != null) {
-            envVars.put("JAVA_HOME", System.getenv("JAVA_HOME"));
-        }
+
+    }
+
+    @Override
+    public Set<Path> pathToStore() {
+        Set<Path> result = new HashSet<>();
+        result.add(Paths.get("build"));
+        return result;
     }
 }

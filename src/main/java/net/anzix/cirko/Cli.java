@@ -1,11 +1,12 @@
 package net.anzix.cirko;
 
 import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
+import ch.qos.logback.core.Appender;
+import ch.qos.logback.core.FileAppender;
 import com.google.gson.GsonBuilder;
-import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.api.errors.InvalidRemoteException;
-import org.eclipse.jgit.internal.storage.file.FileRepository;
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
@@ -64,15 +65,19 @@ public class Cli {
         Path metaDir = Paths.get(meta);
         Env e = new Env(workDir, metaDir);
         e.setRebuild(rebuild);
+        e.setProjectFilter(project);
         Build b = new Build(e);
         try {
             Map<String, ExecutionReport> result = new HashMap<String, ExecutionReport>();
             for (Path projectDir : Files.newDirectoryStream(workDir)) {
-                LOG.debug("Building project " + projectDir.getFileName());
                 Project prj = Project.create(projectDir, e);
-                if (project == null || project.equals(prj.getName())) {
-                    result.put(prj.getName(), b.execute(prj));
-                }
+
+
+                Appender app = createProjectLogger(prj);
+                LOG.debug("Building project " + projectDir.getFileName());
+                result.put(prj.getName(), b.execute(prj));
+                removeProjectLogger(app);
+
             }
             try (FileWriter writer = new FileWriter(metaDir.resolve("status.json").toFile())) {
                 writer.write(new GsonBuilder().setPrettyPrinting().create().toJson(result));
@@ -80,6 +85,35 @@ public class Cli {
         } catch (IOException ex) {
             throw new BuildException("Can't iterate over the workDir " + workDir, ex);
         }
+    }
+
+    private void removeProjectLogger(Appender app) {
+        ch.qos.logback.classic.Logger logger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+        app.stop();
+        logger.detachAppender(app);
+    }
+
+    private Appender createProjectLogger(Project prj) {
+        LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+        FileAppender fileAppender = new FileAppender();
+        fileAppender.setContext(loggerContext);
+        fileAppender.setName("timestamp");
+        // set the file name
+        fileAppender.setFile(prj.getMetadataDir().resolve("build.log").toFile().getAbsolutePath());
+
+        PatternLayoutEncoder encoder = new PatternLayoutEncoder();
+        encoder.setContext(loggerContext);
+        encoder.setPattern("%d %r %level - %msg%n");
+        encoder.start();
+
+        fileAppender.setEncoder(encoder);
+        fileAppender.start();
+
+        ch.qos.logback.classic.Logger logger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+        logger.addAppender(fileAppender);
+        return fileAppender;
+
+
     }
 
 }

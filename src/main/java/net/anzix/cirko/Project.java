@@ -34,7 +34,7 @@ public class Project {
 
     public static Project create(Path p, Env env) {
         Project project = new Project(p);
-        project.metaData = env.getMetaDir().resolve(project.name);
+        project.metaData = env.getMetadataDir().resolve(project.name);
         return project;
 
     }

@@ -13,6 +13,8 @@ public class Env {
 
     private boolean rebuild;
 
+    private String projectFilter;
+
     public Env(Path repoDir, Path metaDir) {
         this.repoDir = repoDir;
         this.metaDir = metaDir;
@@ -22,7 +24,7 @@ public class Env {
         return repoDir;
     }
 
-    public Path getMetaDir() {
+    public Path getMetadataDir() {
         return metaDir;
     }
 
@@ -32,5 +34,17 @@ public class Env {
 
     public void setRebuild(boolean rebuild) {
         this.rebuild = rebuild;
+    }
+
+    public String getProjectFilter() {
+        return projectFilter;
+    }
+
+    public void setProjectFilter(String projectFilter) {
+        this.projectFilter = projectFilter;
+    }
+
+    public boolean isActive(Project p, String branch) {
+        return projectFilter == null || projectFilter.equals(p.getName());
     }
 }

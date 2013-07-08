@@ -4,6 +4,9 @@ import net.anzix.cirko.Env;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.HashSet;
+import java.util.Set;
 
 public class Maven extends Script {
 
@@ -23,5 +26,12 @@ public class Maven extends Script {
         } else {
             return new ProcessBuilder("mvn", "clean", "install");
         }
+    }
+
+    @Override
+    public Set<Path> pathToStore() {
+        Set<Path> result = new HashSet<>();
+        result.add(Paths.get("target"));
+        return result;
     }
 }
