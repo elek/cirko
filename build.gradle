@@ -1,0 +1,19 @@
+apply plugin: 'java'
+apply plugin: 'application'
+
+repositories { 
+  mavenCentral()
+}
+
+mainClassName = 'net.anzix.cirko.Cli'
+
+dependencies {
+   compile 'com.google.guava:guava:14.0'
+   compile 'com.google.inject:guice:3.0'
+   compile 'args4j:args4j:2.0.16'
+   compile 'com.google.code.gson:gson:2.2.4'
+   compile 'ch.qos.logback:logback-classic:1.0.13'
+   compile 'org.slf4j:slf4j-api:1.7.5'
+   compile 'org.eclipse.jgit:org.eclipse.jgit:3.0.0.201306101825-r'
+   testCompile 'junit:junit:4.7'
+}
